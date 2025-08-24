@@ -97,7 +97,6 @@ class SuperAdminController extends Controller
         $validated['natrium_mg'] = 0;
         $validated['kalium_mg'] = 0;
         $validated['tembaga_mg'] = 0;
-        $validated['seng_mg'] = 0;
         $validated['retinol_mcg'] = 0;
         $validated['b_kar_mcg'] = 0;
         $validated['kar_total_mcg'] = 0;
@@ -106,8 +105,13 @@ class SuperAdminController extends Controller
         $validated['niasin_mg'] = 0;
         $validated['bdd_persen'] = 0;
 
-        // Add default status as unpublished and author information
-        $validated['status'] = 'unpublished';
+        // Determine status based on action (publish or save)
+        if ($request->input('action') === 'publish') {
+            $validated['status'] = 'published';
+        } else {
+            $validated['status'] = 'unpublished';
+        }
+        // Add author information
         $validated['created_by'] = auth()->id();
 
         Food::create($validated);
@@ -149,14 +153,15 @@ class SuperAdminController extends Controller
             'seng_mg' => 'required|numeric|min:0',
             'urlimage' => 'nullable|url',
         ]);
-        // Determine action: save or publish
+
+        // Determine status based on action value
         if ($request->input('action') === 'publish') {
-            // Set status to published when publishing
-            $food->update(array_merge($validated, ['status' => 'published']));
+            $status = 'published';
         } else {
-            // Save or update action without 'publish' should keep or set unpublished
-            $food->update(array_merge($validated, ['status' => 'unpublished']));
+            $status = 'unpublished';
         }
+
+        $food->update(array_merge($validated, ['status' => $status]));
 
         return redirect()->route('superadmin.foods.index')
             ->with('success', 'Makanan berhasil diperbarui!');

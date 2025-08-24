@@ -227,12 +227,11 @@
 
                     <!-- Form Actions -->
                     <div class="mt-8 flex justify-end space-x-4">
-                        <button type="button"
-                                onclick="window.history.back()"
+                        <button type="submit" name="action" value="save"
                                 class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                            Simpan
+                            Save
                         </button>
-                        <button type="submit"
+                        <button type="submit" name="action" value="publish"
                                 class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             Publish
                         </button>

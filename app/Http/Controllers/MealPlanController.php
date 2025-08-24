@@ -108,8 +108,9 @@ class MealPlanController extends Controller
                 $recommendationsByNutrient[$key] = $query
                     ->where($col, '<=', $def)
                     ->orderByRaw("($col / ?) desc", [$reqVal])
-                    ->limit(3)
-                    ->get();
+                    ->get()
+                    ->shuffle()
+                    ->take(3);
             } else {
                 $recommendationsByNutrient[$key] = collect();
             }
@@ -139,7 +140,50 @@ class MealPlanController extends Controller
             if ($valid && $score > 0) { $food->score = $score; $boostCandidates[] = $food; }
         }
         usort($boostCandidates, fn($a, $b) => $b->score <=> $a->score);
-        $combinedRecommendations = array_slice($boostCandidates, 0, 3);
+
+        // Find combinations of 3 foods that best meet the calorie deficit
+        $calorieDeficit = $deficits['calories'] ?? 0;
+        $combinedRecommendations = [];
+
+        if (count($boostCandidates) > 0 && $calorieDeficit > 0) {
+            $candidatePool = array_slice($boostCandidates, 0, 50);
+
+            $goodCombinations = [];
+            $combinationDifferences = [];
+
+            if (count($candidatePool) < 3) {
+                $combinedRecommendations = $candidatePool;
+            } else {
+                $poolSize = count($candidatePool);
+                for ($i = 0; $i < $poolSize; $i++) {
+                    for ($j = $i + 1; $j < $poolSize; $j++) {
+                        for ($k = $j + 1; $k < $poolSize; $k++) {
+                            $combination = [$candidatePool[$i], $candidatePool[$j], $candidatePool[$k]];
+                            $totalCalories = ($combination[0]->calories ?? 0) + ($combination[1]->calories ?? 0) + ($combination[2]->calories ?? 0);
+                            $difference = abs($totalCalories - $calorieDeficit);
+
+                            // Store combination and its difference
+                            $goodCombinations[] = $combination;
+                            $combinationDifferences[] = $difference;
+                        }
+                    }
+                }
+
+                // Sort combinations by how close they are to the calorie deficit
+                array_multisort($combinationDifferences, SORT_ASC, $goodCombinations);
+
+                // Take the top 5 (or fewer) best combinations and pick one at random
+                $topCombinations = array_slice($goodCombinations, 0, 5);
+                if (!empty($topCombinations)) {
+                    $combinedRecommendations = $topCombinations[array_rand($topCombinations)];
+                }
+            }
+        }
+
+        if (empty($combinedRecommendations)) {
+            // Fallback if no suitable combination is found
+            $combinedRecommendations = collect($boostCandidates)->shuffle()->take(3)->all();
+        }
 
         // Ensure recommendationsPerMeal exists
         $recommendationsPerMeal = [];
@@ -218,50 +262,21 @@ class MealPlanController extends Controller
             $deficits[$key] = max(0, $reqVal - $curVal);
         }
 
-        // Instead of single nutrient focus, compute multi-nutrient boosting score
-        $candidateQuery = DB::table('foods');
+        // Focus recommendations on energy: find foods whose calories approach the calorie deficit
+        $calorieDeficit = $deficits['calories'] ?? 0;
+        $foodQuery = DB::table('foods');
         if (!empty($selectedIds)) {
-            $candidateQuery->whereNotIn('id', $selectedIds);
+            $foodQuery->whereNotIn('id', $selectedIds);
         }
-        $candidates = $candidateQuery->get();
-
-        $boosts = [];
-        foreach ($candidates as $food) {
-            $valid = true;
-            $score = 0;
-            foreach ($percentages as $nutrient => $perc) {
-                if ($perc >= 100) {
-                    continue; // skip nutrients already fulfilled
-                }
-                if (!isset($nutrientConfig[$nutrient])) {
-                    continue;
-                }
-                $col = $nutrientConfig[$nutrient]['column'];
-                $defVal = $deficits[$nutrient] ?? 0;
-                if ($defVal <= 0) {
-                    continue;
-                }
-                $val = $food->{$col} ?? 0;
-                // skip if food overshoots deficit for this nutrient
-                if ($val > $defVal) {
-                    $valid = false;
-                    break;
-                }
-                // contribution normalized to requirement
-                $reqVal = $requirements->{$nutrientConfig[$nutrient]['requirement']} ?? 1;
-                $score += ($val / $reqVal);
-            }
-            if ($valid && $score > 0) {
-                $food->score = $score;
-                $boosts[] = $food;
-            }
-        }
-        // sort by score desc and take top 3
-        usort($boosts, fn($a, $b) => $b->score <=> $a->score);
-        $recommendations = array_slice($boosts, 0, 3);
+        $recommendations = $foodQuery
+            ->where('calories', '<=', $calorieDeficit)
+            ->orderByRaw('ABS(calories - ?) asc', [$calorieDeficit])
+            ->limit(3)
+            ->get();
 
         return response()->json([
             'recommendations' => $recommendations,
+            'focusNutrient' => 'calories',
             'percentages' => $percentages,
             'deficits' => $deficits,
         ]);
