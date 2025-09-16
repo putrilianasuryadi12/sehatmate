@@ -4,7 +4,7 @@
     <x-navigation-home />
 
     <main class="bg-[#061407] w-full min-h-screen pb-16">
-        <form action="{{ route('meal-plan.calculate') }}" method="POST" class="container mx-auto px-4 py-8 mt-16 flex flex-col xl:flex-row text-white gap-6 lg:gap-8">
+        <form action="{{ route('meal-plan.calculate') }}" method="POST" class="container mx-auto px-4 py-8 mt-16 flex flex-col xl:flex-row text-white gap-6 lg:gap-8" autocomplete="off">
             @csrf
             <input type="hidden" name="tdee" id="tdee" value="0">
             <!-- Left Section - Isi Data Diri -->
@@ -18,13 +18,13 @@
                     <div>
                         <label for="age" class="block text-white text-sm sm:text-base md:text-lg font-medium mb-2 md:mb-3">Usia</label>
                         <input type="text" id="age" name="age" placeholder="Berapa usia kamu?"
-                               class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('age') }}">
+                               class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('age') }}" autocomplete="age">
                     </div>
 
                     <!-- Jenis Kelamin -->
                     <div>
                         <label for="gender" class="block text-white text-sm sm:text-base md:text-lg font-medium mb-2 md:mb-3">Jenis Kelamin</label>
-                        <select id="gender" name="gender" class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base">
+                        <select id="gender" name="gender" class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" autocomplete="sex">
                             <option value="">Apa jenis kelamin kamu?</option>
                             <option value="Laki-laki" {{ old('gender') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
                             <option value="Perempuan" {{ old('gender') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
@@ -48,12 +48,12 @@
                         <div class="flex-1">
                             <label for="weight" class="block text-white text-sm sm:text-base md:text-lg font-medium mb-2 md:mb-3">Berat Badan</label>
                             <input type="text" id="weight" name="weight" placeholder="kg"
-                                   class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('weight') }}">
+                                   class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('weight') }}" autocomplete="weight">
                         </div>
                         <div class="flex-1">
                             <label for="height" class="block text-white text-sm sm:text-base md:text-lg font-medium mb-2 md:mb-3">Tinggi Badan</label>
                             <input type="text" id="height" name="height" placeholder="cm"
-                                   class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('height') }}">
+                                   class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base" value="{{ old('height') }}" autocomplete="height">
                         </div>
                     </div>
                 </div>
@@ -73,8 +73,9 @@
                         <input type="hidden" name="breakfast" x-model="selectedFoodId">
                         <input type="hidden" name="breakfast_name" x-model="selectedFoodName">
                         <div class="relative">
-                            <input type="text" id="breakfast-search" x-model="searchTerm" @keydown.enter.prevent
-                                   @input.debounce.300ms="if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search') }}?query=' + encodeURIComponent(searchTerm))
+                            <input type="search" id="breakfast-search" x-model="searchTerm" @keydown.enter.prevent
+                                   autocomplete="nope" autocorrect="off" autocapitalize="none" spellcheck="false"
+                                   @input.debounce.300ms="if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search', [], false) }}?query=' + encodeURIComponent(searchTerm))
                                        .then(res => res.json()).then(data => recommendations = data).catch(err => console.error(err)); } else { recommendations = [] }"
                                    placeholder="Cari sarapan..."
                                    class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base">
@@ -108,8 +109,9 @@
                         <input type="hidden" name="lunch" x-model="selectedFoodId">
                         <input type="hidden" name="lunch_name" x-model="selectedFoodName">
                         <div class="relative">
-                            <input type="text" id="lunch-search" x-model="searchTerm" @keydown.enter.prevent
-                                   @input.debounce.300ms="if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search') }}?query=' + encodeURIComponent(searchTerm))
+                            <input type="search" id="lunch-search" x-model="searchTerm" @keydown.enter.prevent
+                                   autocomplete="nope" autocorrect="off" autocapitalize="none" spellcheck="false"
+                                   @input.debounce.300ms="if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search', [], false) }}?query=' + encodeURIComponent(searchTerm))
                                        .then(res => res.json()).then(data => recommendations = data).catch(err => console.error(err)); } else { recommendations = [] }"
                                    placeholder="Cari makan siang..."
                                    class="w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm md:text-base">
@@ -143,8 +145,9 @@
                         <input type="hidden" name="dinner" x-model="selectedFoodId">
                         <input type="hidden" name="dinner_name" x-model="selectedFoodName">
                         <div class="relative">
-                            <input type="text" id="dinner-search" x-model="searchTerm" @keydown.enter.prevent
-                                   @input.debounce.300ms=" if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search') }}?query=' + encodeURIComponent(searchTerm))
+                            <input type="search" id="dinner-search" x-model="searchTerm" @keydown.enter.prevent
+                                   autocomplete="nope" autocorrect="off" autocapitalize="none" spellcheck="false"
+                                   @input.debounce.300ms=" if (searchTerm.length > 2 && searchTerm !== selectedFoodName) { fetch('{{ route('food.search', [], false) }}?query=' + encodeURIComponent(searchTerm))
                                        .then(res => res.json())
                                        .then(data => { console.log('dinner data', data); recommendations = data; })
                                        .catch(err => console.error(err)); } else { recommendations = []; }"
@@ -513,7 +516,7 @@
                 lunch: selectedMealNutrients.lunch.map(f => f.id),
                 dinner: selectedMealNutrients.dinner.map(f => f.id),
             };
-            const response = await fetch('{{ route('meal-plan.recommendations') }}', {
+            const response = await fetch('{{ route('meal-plan.recommendations', [], false) }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

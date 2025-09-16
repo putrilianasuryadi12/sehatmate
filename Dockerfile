@@ -1,9 +1,6 @@
-# Dockerfile for Laravel Application
-
 # Stage 1: Build Laravel with Composer
 FROM composer:2 AS builder
 WORKDIR /app
-# RUN composer create-project --prefer-dist laravel/laravel .
 
 # Stage 2: Setup PHP runtime
 FROM php:8.2-cli
